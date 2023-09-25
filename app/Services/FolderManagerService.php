@@ -25,7 +25,22 @@ class FolderManagerService
 
     public function getFolder()
     {
-        return Folder::with('files')->get();
+//        $folders = Folder::with('children','files')->get();
+//
+//        foreach ($folders as $folder) {
+//            // Para cada carpeta principal, obtenemos sus carpetas secundarias
+//            foreach ($folder->children as $child) {
+//                // Para cada carpeta secundaria, obtenemos sus archivos
+//                $child->load('files');
+//            }
+//
+//        return $folder;
+//        }
+
+        $folders = Folder::with('children', 'children.files')->withCount('children as file_count')->get();
+
+        return $folders;
+
     }
 
 
@@ -43,6 +58,36 @@ class FolderManagerService
         $folder->save();
 
         return $folder;
+
+    }
+
+    public function createFolderInFolder($folderId, Request $request)
+    {
+        $request->validate([
+            'name' => 'required|unique:folders'
+        ]);
+
+        $mainFolder = Folder::with('children')->findOrFail($folderId);
+
+        $subFolder = new Folder($request->all());
+
+        $subFolder->parent()->associate($mainFolder);
+
+        $folderPath = "uploads/";
+
+        for($i = 0; $i > count($mainFolder); $i++){
+            $folderPath
+        }
+
+        if ($mainFolder->parent) {
+            $folderPath = "uploads/{$mainFolder->parent->name}/{$mainFolder->name}/{$subFolder->name}";
+        }
+
+        Storage::disk($this->disk)->makeDirectory($folderPath);
+
+        $subFolder->save();
+
+        return $subFolder;
 
     }
 

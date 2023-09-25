@@ -96,6 +96,49 @@ class FileManagerService
             'files.*' => 'required|mimes:png,jpg,pdf,html,docx,xlsx|max:2048',
         ]);
 
+        // Obtener la carpeta principal
+        $mainFolder = Folder::findOrFail($folderId);
+
+        foreach ($request->files as $fileGroup) {
+            foreach ($fileGroup as $item) {
+                if ($item->isValid()) {
+                    $name = $item->getClientOriginalName();
+                    $fileName = time() . '_' . $item->getClientOriginalName();
+                    $type = $item->getClientOriginalExtension();
+                    $size = $item->getSize();
+
+                    // Crear la ruta completa incluyendo la carpeta secundaria (si existe)
+                    $folderPath = "public/uploads/{$mainFolder->name}";
+                    //dd($folderPath);
+
+                    if ($mainFolder->parent) {
+                        $folderPath = "public/uploads/{$mainFolder->parent->name}/{$mainFolder->name}";
+                    }
+
+                    // Guardar el contenido real del archivo en la ruta completa
+                    Storage::put("{$folderPath}/{$fileName}", file_get_contents($item->getRealPath()));
+
+                    $fileModel = new File;
+                    $fileModel->name = $name;
+                    $fileModel->name_generate = $fileName;
+                    $fileModel->type = $type;
+                    $fileModel->size = $size;
+                    $fileModel->folder_id = $folderId;
+                    $fileModel->save();
+                }
+            }
+        }
+
+        return response()->json(['message' => 'Los archivos se han cargado correctamente']);
+    }
+
+
+    public function uploadMulti2($folderId, Request $request)
+    {
+        $request->validate([
+            'files.*' => 'required|mimes:png,jpg,pdf,html,docx,xlsx|max:2048',
+        ]);
+
 
         foreach ($request->files as $file) {
 

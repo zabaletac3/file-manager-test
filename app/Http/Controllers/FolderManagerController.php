@@ -22,6 +22,10 @@ class FolderManagerController extends Controller
         return $this->folderManagerService->create($request);
     }
 
+    public function createFolderInFolder($folderId, Request $request){
+        return $this->folderManagerService->createFolderInFolder($folderId, $request);
+    }
+
     public function edit(Request $request, $id)
     {
         return $this->folderManagerService->edit($request, $id);
