@@ -11,6 +11,12 @@ class FolderManagerController extends Controller
 {
     public function __construct( protected FolderManagerService $folderManagerService){}
 
+
+    public function getfolder()
+    {
+        return $this->folderManagerService->getFolder();
+    }
+
     public function create(Request $request)
     {
         return $this->folderManagerService->create($request);

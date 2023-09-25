@@ -38,14 +38,17 @@ class FileManagerService
     public function upload($folderId, Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:png,jpg,pdf,html|max:2048'
+            'file' => 'required|mimes:png,jpg,pdf,html,docx|max:2048'
         ]);
+
+        $folder = Folder::where('id', $folderId)->first();
 
         $file = $request->file('file');
 
+
         $fileName = time() . '_' . $file->getClientOriginalName();
 
-        $file->storeAs('uploads', $fileName, 'public');
+        $file->storeAs('uploads/'.$folder->name, $fileName, 'public');
 
         $data = new File([
             'name' => $file->getClientOriginalName(),
@@ -90,8 +93,9 @@ class FileManagerService
     public function uploadMulti($folderId, Request $request)
     {
         $request->validate([
-            'files.*' => 'required|mimes:png,jpg,pdf,html|max:2048',
+            'files.*' => 'required|mimes:png,jpg,pdf,html,docx,xlsx|max:2048',
         ]);
+
 
         foreach ($request->files as $file) {
 
@@ -101,7 +105,10 @@ class FileManagerService
                 $type = $item->getClientOriginalExtension();
                 $size = $item->getSize();
 
-                Storage::put("public/uploads/{$fileName}", $fileName);
+                $folder = Folder::findOrFail($folderId);
+
+                Storage::put("public/uploads/{$folder->name}/{$fileName}", $fileName);
+
                 $fileModel = new File;
 
                 $fileModel->name = $name;

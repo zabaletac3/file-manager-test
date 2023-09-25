@@ -32,6 +32,7 @@ Route::get('home/get-files/{id}', [FileManagerController::class, 'getFiles']);
  Route::get('home/search', [FileManagerService::class, 'search']);
 
 
+Route::get('folder/all', [FolderManagerController::class, 'getfolder']);
 Route::post('folder/create', [FolderManagerController::class, 'create']);
 Route::put('folder/update/{id}', [FolderManagerController::class, 'edit']);
 Route::delete('folder/delete/{id}', [FolderManagerController::class, 'delete']);
