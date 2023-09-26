@@ -17,6 +17,11 @@ class FolderManagerController extends Controller
         return $this->folderManagerService->getFolder();
     }
 
+    public function getOne($id)
+    {
+        return $this->folderManagerService->getFolderOne($id);
+    }
+
     public function create(Request $request)
     {
         return $this->folderManagerService->create($request);

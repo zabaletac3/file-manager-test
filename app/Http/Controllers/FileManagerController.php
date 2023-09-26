@@ -9,27 +9,32 @@ class FileManagerController extends Controller
 {
     public function __construct( protected FileManagerService $fileManagerService){}
 
-    public function getData()
+    public function getAll()
     {
-        return $this->fileManagerService->get();
+        return $this->fileManagerService->findAll();
     }
 
-    public function getFiles($folderId)
+    public function getById(int $id)
     {
-        return $this->fileManagerService->getData($folderId);
+        return $this->fileManagerService->findById($id);
     }
 
-    public function create($folderId, Request $request)
+    public function getByFolderId(int $folderId)
     {
-        return $this->fileManagerService->upload($folderId, $request);
+        return $this->fileManagerService->findByFolderId($folderId);
     }
 
-    public function download($id)
+    public function upload(int $folderId, Request $request)
+    {
+        return $this->fileManagerService->uploadMulti($folderId, $request);
+    }
+
+    public function download(int $id)
     {
         return $this->fileManagerService->download($id);
     }
 
-    public function delete($id)
+    public function delete(int $id)
     {
         return $this->fileManagerService->delete($id);
     }
@@ -39,10 +44,6 @@ class FileManagerController extends Controller
         return $this->fileManagerService->search($request);
     }
 
-    public function uploadMulti($folderId, Request $request)
-    {
-        return $this->fileManagerService->uploadMulti($folderId, $request);
-    }
 
 
 }

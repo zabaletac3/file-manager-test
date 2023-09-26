@@ -23,16 +23,17 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
-Route::get('home/get-data', [FileManagerController::class, 'getData']);
-Route::get('home/get-files/{id}', [FileManagerController::class, 'getFiles']);
- Route::post('home/upload/{folderId}', [FileManagerService::class, 'upload']);
- Route::post('home/upload-multi/{folderId}', [FileManagerService::class, 'uploadMulti']);
- Route::get('home/download/{id}', [FileManagerService::class, 'download']);
- Route::delete('home/delete/{id}', [FileManagerService::class, 'delete']);
- Route::get('home/search', [FileManagerService::class, 'search']);
+Route::get('home/get-all', [FileManagerController::class, 'getAll']);
+Route::get('home/get-by-id/{id}', [FileManagerController::class, 'getById']);
+Route::get('home/get-by-folder/{id}', [FileManagerController::class, 'getByFolderId']);
+Route::post('home/upload/{folderId}', [FileManagerController::class, 'upload']);
+Route::get('home/download/{id}', [FileManagerController::class, 'download']);
+Route::delete('home/delete/{id}', [FileManagerController::class, 'delete']);
+Route::get('home/search', [FileManagerController::class, 'search']);
 
 
 Route::get('folder/all', [FolderManagerController::class, 'getfolder']);
+Route::get('folder/get-one/{id}', [FolderManagerController::class, 'getOne']);
 Route::post('folder/create', [FolderManagerController::class, 'create']);
 Route::post('folder/create-sub-folder/{id}', [FolderManagerController::class, 'createFolderInFolder']);
 Route::put('folder/update/{id}', [FolderManagerController::class, 'edit']);
