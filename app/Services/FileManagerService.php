@@ -47,6 +47,7 @@ class FileManagerService
 
             //$file = File::findOrFail($id);
             $file = $this->fileModel->findOrFail($id);
+            $folder = $file->folder;
 
             return response()->json(['success' => true, 'data' => $file], Response::HTTP_OK);
 
@@ -97,6 +98,9 @@ class FileManagerService
         foreach ($request->files as $fileGroup) {
             foreach ($fileGroup as $item) {
                 if ($item->isValid()) {
+                    $fileModel = new File;
+
+
                     $name = $item->getClientOriginalName();
                     $fileName = time() . '_' . $item->getClientOriginalName();
                     $type = $item->getClientOriginalExtension();
@@ -105,7 +109,6 @@ class FileManagerService
                     // Guardar el contenido real del archivo en la ruta completa
                     Storage::disk($this->disk)->put("{$folderPath}/{$fileName}", file_get_contents($item->getRealPath()));
 
-                    $fileModel = new File;
                     $fileModel->name = $name;
                     $fileModel->name_generate = $fileName;
                     $fileModel->type = $type;

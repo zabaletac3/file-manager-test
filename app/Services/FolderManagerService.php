@@ -33,15 +33,20 @@ class FolderManagerService
         }
 
         return $rootFolders;
+
     }
 
     public function getFolderOne($id)
     {
         $folder = Folder::with('files', 'children.files')->findOrFail($id);
 
+        //dd($folder);
+
         $this->getAllChildren($folder);
 
         return $folder;
+
+        //return Storage::disk($this->disk)->files('uploads/test Google/archivos1');
     }
 
     public function getAllChildren($folder): void
