@@ -13,7 +13,7 @@ class FolderManagerService
 
     protected $disk;
 
-    public function __construct($disk = 'public')
+    public function __construct($disk = 'google')
     {
         $this->disk = $disk;
     }

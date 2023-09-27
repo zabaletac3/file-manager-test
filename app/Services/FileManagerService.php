@@ -14,9 +14,9 @@ class FileManagerService
 
     protected $disk;
     public function __construct(
-        protected Folder $folder,
-        protected File $file,
-        $disk = 'public'
+        protected Folder $folderModel,
+        protected File $fileModel,
+        $disk = 'google'
     ){
         $this->disk = $disk;
     }
@@ -31,7 +31,8 @@ class FileManagerService
     {
         try {
 
-            $files = File::orderBy('id', 'desc')->get();
+            //$files = File::orderBy('id', 'desc')->get();
+            $files = $this->fileModel->orderBy('id', 'desc')->get();
 
             return response()->json(['success' => true, 'data' => $files ], Response::HTTP_OK);
 
@@ -44,7 +45,8 @@ class FileManagerService
     {
         try {
 
-            $file = File::findOrFail($id);
+            //$file = File::findOrFail($id);
+            $file = $this->fileModel->findOrFail($id);
 
             return response()->json(['success' => true, 'data' => $file], Response::HTTP_OK);
 
@@ -60,7 +62,8 @@ class FileManagerService
     {
         try {
 
-            $files = File::where('folder_id', $folderId)->get();
+            //$files = File::where('folder_id', $folderId)->get();
+            $files = $this->fileModel->where('folder_id', $folderId)->get();
             //$formattedSize = $this->formatSize($files->first()->size);
 
             if ($files->isEmpty()) {
@@ -83,7 +86,8 @@ class FileManagerService
         ]);
 
         // Obtener la carpeta principal
-        $mainFolder = Folder::findOrFail($folderId);
+        //$mainFolder = Folder::findOrFail($folderId);
+        $mainFolder = $this->folderModel->findOrFail($folderId);
 
         $folderPath = $this->buildFilePath($mainFolder);
 
@@ -99,7 +103,7 @@ class FileManagerService
                     $size = $item->getSize();
 
                     // Guardar el contenido real del archivo en la ruta completa
-                    Storage::put("{$folderPath}/{$fileName}", file_get_contents($item->getRealPath()));
+                    Storage::disk($this->disk)->put("{$folderPath}/{$fileName}", file_get_contents($item->getRealPath()));
 
                     $fileModel = new File;
                     $fileModel->name = $name;
@@ -195,7 +199,7 @@ class FileManagerService
         return round($bytes / pow(1024, $i), 2) . ' ' . $sizes[$i];
     }
 
-    private function buildFilePath($folder, $basePath = "public/uploads")
+    private function buildFilePath($folder, $basePath = "uploads")
     {
         // Construir la ruta completa de eliminación
         $directoryPath = $basePath;
