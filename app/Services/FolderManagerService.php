@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\File;
 use App\Models\Folder;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Response;
 
 
 class FolderManagerService
@@ -26,27 +28,44 @@ class FolderManagerService
     public function getFolder()
     {
 
-        $rootFolders = Folder::whereNull('parent_id')->with('files','children.files')->get();
+        try {
 
-        foreach ($rootFolders as $rootFolder) {
-            $this->getAllChildren($rootFolder);
+
+            $rootFolders = Folder::whereNull('parent_id')->with('files', 'children.files')->get();
+
+            foreach ($rootFolders as $rootFolder) {
+                $this->getAllChildren($rootFolder);
+            }
+
+            return $rootFolders;
+
+
+        } catch (\Exception $exception) {
+            return response()->json(['success' => false, 'errors' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        return $rootFolders;
-
     }
 
     public function getFolderOne($id)
     {
-        $folder = Folder::with('files', 'children.files')->findOrFail($id);
 
-        //dd($folder);
+        try {
 
-        $this->getAllChildren($folder);
+            $folder = Folder::with('files', 'children.files')->findOrFail($id);
 
-        return $folder;
+            //dd($folder);
 
-        //return Storage::disk($this->disk)->files('uploads/test Google/archivos1');
+            $this->getAllChildren($folder);
+
+            return $folder;
+
+            //return Storage::disk($this->disk)->files('uploads/test Google/archivos1');
+
+        } catch (ModelNotFoundException) {
+            return response()->json(['success' => false, 'errors' => 'Carpeta no encontrado.'], Response::HTTP_NOT_FOUND);
+        } catch (\Exception $exception) {
+            return response()->json(['success' => false, 'errors' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
     }
 
     public function getAllChildren($folder): void
@@ -58,9 +77,47 @@ class FolderManagerService
     }
 
 
-
-    public function create(Request $request): Folder
+    public function create1111(Request $request)
     {
+
+        try {
+
+        $request->validate([
+            'name' => 'required|unique:folders'
+        ]);
+
+        //$folder = new Folder($request->all());
+
+        $all = Storage::disk($this->disk)->allDirectories();
+         dd($all);
+        //$path = Storage::disk($this->disk)->directories('imageness');
+
+        $data = Storage::disk($this->disk)->makeDirectory('uploads/imagenes/archivos de musica/'.$request->name);
+
+
+
+
+        //return Storage::disk($this->disk)->path($data);
+
+//        Storage::createDirectory('public/uploads/'.$folder->name);
+        //Storage::disk($this->disk)->makeDirectory('uploads/' . $folder->name);
+
+        //$folder->save();
+
+        return response()->json(['success' => true, 'message' => 'Folder creado correctamente'], Response::HTTP_CREATED);
+        //return response()->json(['success' => true, 'message' => 'Folder creado correctamente', 'data' => $folder ], Response::HTTP_CREATED);
+
+        } catch (\Exception $exception) {
+            return response()->json(['success' => false, 'errors' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    public function create(Request $request)
+    {
+
+        try {
+
         $request->validate([
             'name' => 'required|unique:folders'
         ]);
@@ -68,12 +125,15 @@ class FolderManagerService
         $folder = new Folder($request->all());
 
 //        Storage::createDirectory('public/uploads/'.$folder->name);
-        Storage::disk($this->disk)->makeDirectory('uploads/'.$folder->name);
+        Storage::disk($this->disk)->makeDirectory('uploads/' . $folder->name);
 
         $folder->save();
 
-        return $folder;
+        return response()->json(['success' => true, 'message' => 'Folder creado correctamente', 'data' => $folder ], Response::HTTP_CREATED);
 
+        } catch (\Exception $exception) {
+            return response()->json(['success' => false, 'errors' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     public function createFolderInFolder($folderId, Request $request): Folder
@@ -166,12 +226,10 @@ class FolderManagerService
     }
 
 
-
-
     public function delete1($folderId): \Illuminate\Http\JsonResponse
     {
         $files = File::with('folder')->where('folder_id', $folderId)->get();
-        foreach ($files as $file){
+        foreach ($files as $file) {
             $folderName = $file->folder->name;
 
             //unlink(storage_path("app/public/uploads/$folderName/". $file->name_generate));
@@ -188,7 +246,6 @@ class FolderManagerService
 
         return response()->json(['success' => true, 'message' => "Folder eliminado"]);
     }
-
 
 
 }
