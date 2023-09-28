@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\File;
 use App\Models\Folder;
+use App\Providers\GoogleDriveServiceProvider;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -61,7 +62,7 @@ class FolderManagerService
             //return Storage::disk($this->disk)->files('uploads/test Google/archivos1');
 
         } catch (ModelNotFoundException) {
-            return response()->json(['success' => false, 'errors' => 'Carpeta no encontrado.'], Response::HTTP_NOT_FOUND);
+            return response()->json(['success' => false, 'errors' => 'Carpeta no encontrada.'], Response::HTTP_NOT_FOUND);
         } catch (\Exception $exception) {
             return response()->json(['success' => false, 'errors' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -76,6 +77,67 @@ class FolderManagerService
         }
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \League\Flysystem\FilesystemException
+     */
+    public function create(Request $request)
+    {
+
+        try {
+
+            $parentFolderId = $request->input('parent_folder_id'); // ID de la carpeta padre opcional
+
+            // Validar las reglas de validación según tus necesidades
+            $request->validate([
+                'name' => 'required|unique:folders',
+                'parent_folder_id' => 'nullable|exists:folders,id', // Validar que el ID de la carpeta padre existe si se proporciona
+            ]);
+
+            $folder = new Folder($request->only(['name']));
+
+            // Crear la carpeta en la ubicación deseada
+            if ($parentFolderId) {
+                // Si se proporciona un ID de carpeta padre, crear una subcarpeta
+                $parentFolder = Folder::findOrFail($parentFolderId); // Asegúrate de que la carpeta padre exista
+                $subFolderPath = 'uploads/' . $parentFolder->name . '/' . $folder->name;
+                Storage::cloud()->makeDirectory($subFolderPath);
+
+                // Obtener información de la subcarpeta recién creada
+                $dir = 'uploads/' . $parentFolder->name;
+            } else {
+                // Si no se proporciona un ID de carpeta padre, crear una carpeta en la raíz
+                $folderPath = 'uploads/' . $folder->name;
+                Storage::cloud()->makeDirectory($folderPath);
+
+                // Obtener información de la carpeta recién creada en la raíz
+                $dir = 'uploads';
+            }
+
+            //dd($dir);
+
+            // Guardar la información de la carpeta en la base de datos
+            //$folder->save();
+
+            //return $dir.'/'.$folder->name;
+
+            // Obtener la información de la carpeta recién creada
+            $recursive = true;
+            $contents = collect(Storage::cloud()->listContents($dir, $recursive));
+            return $path = $contents->where('type', 'dir')->where('path', $dir.'/'.$folder->name)->first();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Carpeta creada correctamente',
+                'data' => $folder,
+                'path' => $path,
+            ], Response::HTTP_CREATED);
+
+        } catch (\Exception $exception) {
+            return response()->json(['success' => false, 'errors' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 
     public function create1111(Request $request)
     {
@@ -86,58 +148,25 @@ class FolderManagerService
             'name' => 'required|unique:folders'
         ]);
 
-        //$folder = new Folder($request->all());
+        $folder = new Folder($request->all());
 
-        $all = Storage::disk($this->disk)->allDirectories();
-         dd($all);
-        //$path = Storage::disk($this->disk)->directories('imageness');
+        //Storage::disk($this->disk)->makeDirectory('uploads/' . $folder->name)
+        Storage::cloud()->makeDirectory('/uploads/' . $folder->name);
 
-        $data = Storage::disk($this->disk)->makeDirectory('uploads/imagenes/archivos de musica/'.$request->name);
+        $folder->save();
 
-
-
-
-        //return Storage::disk($this->disk)->path($data);
-
-//        Storage::createDirectory('public/uploads/'.$folder->name);
-        //Storage::disk($this->disk)->makeDirectory('uploads/' . $folder->name);
-
-        //$folder->save();
-
-        return response()->json(['success' => true, 'message' => 'Folder creado correctamente'], Response::HTTP_CREATED);
-        //return response()->json(['success' => true, 'message' => 'Folder creado correctamente', 'data' => $folder ], Response::HTTP_CREATED);
+        return response()->json(['success' => true, 'message' => 'Folder creado correctamente', 'data' => $folder], Response::HTTP_CREATED);
 
         } catch (\Exception $exception) {
             return response()->json(['success' => false, 'errors' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-
-    public function create(Request $request)
+    public function createFolderInFolder($folderId, Request $request)
     {
 
         try {
 
-        $request->validate([
-            'name' => 'required|unique:folders'
-        ]);
-
-        $folder = new Folder($request->all());
-
-//        Storage::createDirectory('public/uploads/'.$folder->name);
-        Storage::disk($this->disk)->makeDirectory('uploads/' . $folder->name);
-
-        $folder->save();
-
-        return response()->json(['success' => true, 'message' => 'Folder creado correctamente', 'data' => $folder ], Response::HTTP_CREATED);
-
-        } catch (\Exception $exception) {
-            return response()->json(['success' => false, 'errors' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    public function createFolderInFolder($folderId, Request $request): Folder
-    {
         $request->validate([
             'name' => 'required|unique:folders'
         ]);
@@ -170,6 +199,13 @@ class FolderManagerService
         $subFolder->save();
 
         return $subFolder;
+
+
+        } catch (ModelNotFoundException) {
+            return response()->json(['success' => false, 'errors' => 'Carpeta no encontrada.'], Response::HTTP_NOT_FOUND);
+        } catch (\Exception $exception) {
+            return response()->json(['success' => false, 'errors' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     private function buildFolderPath($folder, &$folderPath): void
@@ -179,6 +215,7 @@ class FolderManagerService
         }
         $folderPath .= $folder->name . '/';
     }
+
 
     public function edit(Request $request, $id)
     {
