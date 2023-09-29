@@ -82,7 +82,7 @@ class FolderManagerService
      * @return \Illuminate\Http\JsonResponse
      * @throws \League\Flysystem\FilesystemException
      */
-    public function create(Request $request)
+    public function create11111111(Request $request)
     {
 
         try {
@@ -125,7 +125,7 @@ class FolderManagerService
             // Obtener la información de la carpeta recién creada
             $recursive = true;
             $contents = collect(Storage::cloud()->listContents($dir, $recursive));
-            return $path = $contents->where('type', 'dir')->where('path', $dir.'/'.$folder->name)->first();
+            $path = $contents->where('type', 'dir')->where('path', $dir.'/'.$folder->name)->first();
 
             return response()->json([
                 'success' => true,
@@ -139,7 +139,7 @@ class FolderManagerService
         }
     }
 
-    public function create1111(Request $request)
+    public function create(Request $request)
     {
 
         try {
